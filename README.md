@@ -22,3 +22,5 @@ python3 maquette/build.py   # regénère craie.god2 (35 écrans, téléphone 390
 
 Formes : boutons et champs en pilule, cartes à 26–28 px de rayon, icônes au
 trait de 1,7, illustrations d’accueil en noir et blanc.
+
+Ajout du dossier "pages"
