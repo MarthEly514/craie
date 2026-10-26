@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-label="Un vidéoprojecteur sur une table, qui projette un calendrier sur un écran">
+  <!-- Même palette et même facture que student.svg, admin.svg et schedule.svg : aplats, pas de contour,
+       encre #090814, citron #9FE970, gris #3f3d56 / #2f2e41, ombre au sol à 10 %. -->
+
+  <!-- Le sol -->
+  <ellipse cx="450" cy="486" rx="430" ry="30" fill="#090814" opacity="0.1"/>
+  <ellipse cx="450" cy="486" rx="300" ry="18" fill="#090814" opacity="0.1"/>
+
+  <!-- L’écran et son pied -->
+  <rect x="743" y="404" width="12" height="76" rx="4" fill="#3f3d56"/>
+  <rect x="700" y="474" width="98" height="10" rx="5" fill="#3f3d56"/>
+  <rect x="652" y="92" width="194" height="318" rx="18" fill="#f2f2f2"/>
+  <rect x="652" y="92" width="194" height="318" rx="18" fill="none" stroke="#3f3d56" stroke-width="4"/>
+  <path d="M652 110a18 18 0 0 1 18-18h158a18 18 0 0 1 18 18v36H652z" fill="#9FE970"/>
+  <circle cx="696" cy="119" r="9" fill="#fff"/>
+  <circle cx="802" cy="119" r="9" fill="#fff"/>
+  <rect x="674" y="168" width="72" height="54" rx="12" fill="#9FE970"/>
+  <circle cx="710" cy="195" r="16" fill="#fff"/>
+  <path d="M702 195l6 6 11-12" fill="none" stroke="#9FE970" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="756" y="168" width="72" height="54" rx="12" fill="#9FE970"/>
+  <circle cx="792" cy="195" r="16" fill="#fff"/>
+  <path d="M784 195l6 6 11-12" fill="none" stroke="#9FE970" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="674" y="238" width="72" height="54" rx="12" fill="#e6e6e6"/>
+  <rect x="756" y="238" width="72" height="54" rx="12" fill="#e6e6e6"/>
+  <rect x="674" y="318" width="150" height="10" rx="5" fill="#e6e6e6"/>
+  <rect x="674" y="342" width="104" height="10" rx="5" fill="#e6e6e6"/>
+  <rect x="674" y="366" width="128" height="10" rx="5" fill="#e6e6e6"/>
+
+  <!-- Le faisceau -->
+  <path d="M488 270L652 112V392L488 312Z" fill="#9FE970" opacity="0.28"/>
+  <path d="M488 270L652 112V176L488 282Z" fill="#9FE970" opacity="0.22"/>
+
+  <!-- La table -->
+  <rect x="82" y="338" width="500" height="24" rx="12" fill="#3f3d56"/>
+  <rect x="122" y="360" width="20" height="124" rx="6" fill="#2f2e41"/>
+  <rect x="522" y="360" width="20" height="124" rx="6" fill="#2f2e41"/>
+
+  <!-- Le câble et sa prise -->
+  <path d="M166 322C100 322 84 392 106 440S176 500 238 478" fill="none" stroke="#3f3d56" stroke-width="6" stroke-linecap="round"/>
+  <rect x="234" y="464" width="40" height="28" rx="9" fill="#090814"/>
+  <rect x="274" y="470" width="14" height="5" rx="2.5" fill="#3f3d56"/>
+  <rect x="274" y="481" width="14" height="5" rx="2.5" fill="#3f3d56"/>
+
+  <!-- Le vidéoprojecteur -->
+  <rect x="190" y="326" width="44" height="14" rx="6" fill="#2f2e41"/>
+  <rect x="392" y="326" width="44" height="14" rx="6" fill="#2f2e41"/>
+  <rect x="150" y="226" width="330" height="108" rx="30" fill="#090814"/>
+  <path d="M150 258a32 32 0 0 1 32-32h266a32 32 0 0 1 32 32v6H150z" fill="#9FE970"/>
+  <rect x="182" y="238" width="62" height="10" rx="5" fill="#fff" opacity="0.55"/>
+  <rect x="182" y="282" width="104" height="9" rx="4.5" fill="#3f3d56"/>
+  <rect x="182" y="300" width="104" height="9" rx="4.5" fill="#3f3d56"/>
+  <rect x="182" y="318" width="104" height="9" rx="4.5" fill="#3f3d56" opacity="0.6"/>
+  <circle cx="326" cy="302" r="21" fill="#3f3d56"/>
+  <circle cx="326" cy="302" r="8" fill="#9FE970"/>
+  <circle cx="364" cy="276" r="5" fill="#9FE970"/>
+  <circle cx="382" cy="276" r="5" fill="#3f3d56"/>
+
+  <!-- L’objectif -->
+  <rect x="452" y="262" width="38" height="56" rx="12" fill="#3f3d56"/>
+  <rect x="470" y="266" width="20" height="48" rx="9" fill="#2f2e41"/>
+  <circle cx="436" cy="290" r="44" fill="#3f3d56"/>
+  <circle cx="436" cy="290" r="35" fill="#090814"/>
+  <circle cx="436" cy="290" r="24" fill="#2f2e41"/>
+  <circle cx="436" cy="290" r="13" fill="#090814"/>
+  <circle cx="427" cy="280" r="7" fill="#fff" opacity="0.9"/>
+  <circle cx="445" cy="300" r="3.5" fill="#9FE970"/>
+</svg>

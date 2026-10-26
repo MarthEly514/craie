@@ -1,0 +1,211 @@
+/* ---- Craie : jetons ----
+   Palette relevée sur refs/UI_base.jpg : un vert forêt presque noir pour
+   l’encre et l’action principale, un citron vert vif pour l’accent, un gris
+   verdâtre très clair pour les surfaces, sur des écrans blancs. */
+:root {
+  --toile: #e3e2de;
+  --fond: #ffffff;
+  --surface: #f0f3ec;
+  --surface-2: #e4eadc;
+  --bord: #ececea;
+
+  --encre: #173300;
+  --encre-2: #2c4a12;
+  --texte: #182011;
+  --discret: #66735d;
+  --pale: #a3aa9c;
+
+  /* Un role par couleur. L’encre : ce qui se touche. Le citron : l’accent
+     et ce qui est libre. Le corail : pris, refusé, à ne pas rater. */
+  --lime: #9fe970;
+  --lime-clair: #e6f8d8;
+  --lime-fonce: #4f8a1f;
+  --corail: #c4432b;
+  --corail-clair: #fde9e4;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'WuraMi', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--texte);
+  background: var(--fond);
+  -webkit-font-smoothing: antialiased;
+  word-spacing: 0.08em;
+}
+
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.ic.petit { width: 18px; height: 18px; }
+
+/* ---- Gabarit d’un écran ---- */
+.app { position: relative; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: var(--fond); }
+.barre-etat { position: relative; height: 54px; padding: 8px 30px 0; display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 15px; flex: none; color: var(--encre); }
+.ile { position: absolute; left: 50%; top: 11px; width: 104px; height: 30px; margin-left: -52px; border-radius: 15px; background: #000; }
+.etat-icones { display: flex; gap: 5px; align-items: center; }
+.etat-icones .ic { width: 18px; height: 18px; }
+.indicateur { position: absolute; left: 50%; bottom: 8px; width: 138px; height: 5px; margin-left: -69px; border-radius: 3px; background: var(--encre); }
+
+.entete { display: flex; align-items: center; gap: 12px; padding: 14px 20px 14px; flex: none; }
+.titre-ecran { flex: 1; font-size: 28px; font-weight: 700; letter-spacing: 0; line-height: 1.1; color: var(--encre); }
+.entete.compact .titre-ecran { font-size: 20px; letter-spacing: 0; text-align: center; }
+.entete.compact .bouton-rond:first-child:not(:last-child) { margin-right: 0; }
+.entete.compact::after { content: ''; width: 42px; flex: none; }
+.entete.compact:has(.bouton-rond:last-child:not(:first-child))::after { display: none; }
+.bouton-rond { width: 42px; height: 42px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; position: relative; flex: none; color: var(--encre); }
+.bouton-rond .point { position: absolute; top: 10px; right: 11px; width: 9px; height: 9px; border-radius: 50%; background: var(--corail); border: 2px solid var(--surface); }
+
+.corps { flex: 1; overflow: hidden; padding: 2px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+.corps.centre { align-items: center; justify-content: center; text-align: center; gap: 12px; padding-bottom: 60px; }
+.pousse { flex: 1; }
+.rangee { display: flex; gap: 10px; }
+.rangee > * { flex: 1; }
+
+/* ---- Onglets ---- */
+.onglets { flex: none; display: flex; padding: 10px 12px 30px; background: var(--fond); border-top: 1px solid var(--bord); }
+.onglet { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--pale); }
+.onglet .pastille { width: 58px; height: 32px; border-radius: 16px; display: grid; place-items: center; }
+.onglet.actif { color: var(--encre); }
+.onglet.actif .pastille { background: var(--lime); }
+
+/* ---- Contrôles ---- */
+.segments { display: flex; background: var(--surface); border-radius: 99px; padding: 4px; flex: none; }
+.segment { flex: 1; text-align: center; padding: 10px 4px; border-radius: 99px; font-weight: 600; font-size: 14px; color: var(--discret); white-space: nowrap; }
+.segment.actif { background: var(--encre); color: #fff; }
+
+.puces { display: flex; gap: 8px; flex: none; flex-wrap: wrap; }
+.puce { padding: 9px 16px; border-radius: 99px; background: var(--surface); font-weight: 600; font-size: 14px; white-space: nowrap; display: flex; align-items: center; gap: 6px; color: var(--encre); }
+.puce.actif { background: var(--encre); color: #fff; }
+.puce.pris { color: var(--pale); background: transparent; text-decoration: line-through; box-shadow: inset 0 0 0 1.5px var(--bord); }
+.puce.discret { font-size: 13px; padding: 7px 13px; }
+
+.jours { display: flex; gap: 8px; flex: none; }
+.jour { flex: 1; text-align: center; padding: 10px 0; border-radius: 22px; background: var(--surface); display: flex; flex-direction: column; gap: 2px; font-size: 12px; font-weight: 600; color: var(--discret); }
+.jour b { font-size: 18px; color: var(--encre); }
+.jour.actif { background: var(--encre); color: hsl(0 0% 100% / 0.65); }
+.jour.actif b { color: #fff; }
+
+.btn { height: 50px; border-radius: 99px; background: var(--encre); color: #fff; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; flex: none; }
+.btn.lime { background: var(--lime); color: var(--encre); }
+.btn.clair { background: var(--surface); color: var(--encre); }
+.btn.danger { background: var(--corail); }
+.btn.contour-danger { background: transparent; color: var(--corail); box-shadow: inset 0 0 0 1.5px var(--corail-clair); }
+.btn-petit { height: 38px; padding: 0 18px; border-radius: 99px; background: var(--encre); color: #fff; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.btn-petit.clair { background: var(--surface); color: var(--encre); }
+.lien { text-align: center; font-weight: 500; color: var(--encre); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; font-size: 14px; }
+.pied-lien { text-align: center; font-size: 14px; color: var(--discret); }
+.pied-lien b { color: var(--encre); font-weight: 700; }
+.ou { display: flex; align-items: center; gap: 14px; color: var(--discret); font-size: 13px; flex: none; }
+.ou::before, .ou::after { content: ''; flex: 1; height: 1px; background: var(--bord); }
+
+.champ { display: flex; flex-direction: column; gap: 7px; flex: none; }
+.champ label { font-size: 13px; font-weight: 600; color: var(--discret); padding-left: 18px; }
+.saisie { height: 50px; border-radius: 99px; background: var(--fond); box-shadow: inset 0 0 0 1.5px var(--bord); padding: 0 18px; display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--encre); }
+.saisie .ic { color: var(--pale); width: 22px; height: 22px; }
+.saisie .fin { margin-left: auto; color: var(--discret); font-size: 14px; font-weight: 600; display: flex; }
+.saisie.vide { color: var(--pale); }
+.saisie.focus { box-shadow: inset 0 0 0 1.5px var(--encre); }
+.recherche { height: 48px; border-radius: 99px; background: var(--surface); display: flex; align-items: center; gap: 10px; padding: 0 18px; color: var(--discret); flex: none; }
+
+.case { width: 24px; height: 24px; border-radius: 8px; box-shadow: inset 0 0 0 2px var(--surface-2); display: grid; place-items: center; flex: none; background: var(--fond); }
+.case.coche { background: var(--encre); box-shadow: none; color: var(--lime); }
+.case .ic { width: 16px; height: 16px; stroke-width: 2.6; }
+.case.ronde { border-radius: 50%; }
+
+/* ---- Cartes et lignes ---- */
+.carte { background: var(--surface); border-radius: 28px; padding: 18px; display: flex; flex-direction: column; gap: 12px; flex: none; }
+.carte.encre { background: var(--encre); color: #fff; }
+.carte.encre .sous { color: hsl(0 0% 100% / 0.65); }
+.liste { display: flex; flex-direction: column; gap: 10px; }
+.ligne { display: flex; align-items: center; gap: 14px; background: var(--surface); border-radius: 26px; padding: 12px 16px 12px 12px; flex: none; }
+.ligne.choisie { background: var(--lime-clair); box-shadow: inset 0 0 0 1.5px var(--lime); }
+.ligne.eteinte { opacity: 0.55; }
+.ligne .texte { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.titre { font-weight: 700; font-size: 16px; color: var(--encre); }
+.sous { font-size: 13px; color: var(--discret); }
+.vignette { width: 48px; height: 48px; border-radius: 50%; background: var(--fond); color: var(--encre); display: grid; place-items: center; flex: none; }
+.vignette.lime { background: var(--lime); color: var(--encre); }
+.vignette.corail { background: var(--corail-clair); color: var(--corail); }
+.vignette.encre { background: var(--encre); color: var(--lime); }
+.vignette.grand { width: 60px; height: 60px; }
+
+.statut { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 99px; white-space: nowrap; flex: none; }
+.statut.libre { background: var(--lime); color: var(--encre); }
+.statut.pris { background: var(--corail-clair); color: var(--corail); }
+.statut.attribue { background: var(--fond); color: var(--encre); }
+.statut.neutre { background: var(--surface-2); color: var(--encre); }
+
+.avatar { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 16px; background: var(--fond); color: var(--encre); flex: none; }
+.avatar.lime { background: var(--lime); }
+.avatar.encre { background: var(--encre); color: var(--lime); }
+.avatar.geant { width: 84px; height: 84px; font-size: 30px; }
+
+.tuiles { display: flex; gap: 12px; flex: none; }
+.tuile { flex: 1; background: var(--surface); border-radius: 28px; padding: 16px 18px; display: flex; flex-direction: column; }
+.tuile b { font-size: 32px; line-height: 1.1; letter-spacing: 0; color: var(--encre); }
+.tuile.lime { background: var(--lime); }
+.tuile.lime .sous { color: var(--encre-2); }
+
+.infos { display: flex; flex-direction: column; }
+.info { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--surface-2); gap: 12px; }
+.info:last-child { border-bottom: none; }
+.info span:first-child { color: var(--discret); }
+.info span:last-child { font-weight: 600; text-align: right; color: var(--encre); }
+
+.note { display: flex; gap: 12px; align-items: flex-start; background: var(--lime-clair); border-radius: 22px; padding: 14px 16px; font-size: 14px; color: var(--encre); flex: none; }
+.note .ic { margin-top: 1px; }
+.titre-section { font-size: 13px; font-weight: 700; color: var(--discret); text-transform: uppercase; letter-spacing: 0.06em; padding-left: 4px; flex: none; }
+
+/* ---- Emploi du temps ---- */
+.horaire { display: flex; gap: 14px; flex: none; }
+.horaire .heure { width: 46px; flex: none; padding-top: 16px; font-size: 13px; font-weight: 700; color: var(--discret); }
+.horaire .cours { flex: 1; background: var(--surface); border-radius: 26px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.horaire .cours.a-faire { background: var(--fond); box-shadow: inset 0 0 0 1.5px var(--lime); }
+.horaire .cours.libre { background: transparent; box-shadow: inset 0 0 0 1.5px var(--bord); color: var(--pale); }
+.horaire .attrib { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---- Succès, erreur ---- */
+.rond-grand { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 8px; }
+.rond-grand .ic { width: 44px; height: 44px; stroke-width: 2.2; }
+.rond-grand.ok { background: var(--lime); color: var(--encre); }
+.rond-grand.alerte { background: var(--corail-clair); color: var(--corail); }
+.rond-grand.lime { background: var(--lime-clair); color: var(--encre); }
+.gros-titre { font-size: 26px; font-weight: 700; letter-spacing: 0; line-height: 1.15; color: var(--encre); }
+.texte-doux { color: var(--discret); max-width: 300px; }
+.bas { display: flex; flex-direction: column; gap: 10px; padding: 0 20px 34px; flex: none; }
+
+/* ---- Feuille du bas ---- */
+.feuille-fond { position: absolute; inset: 0; background: hsl(100 100% 6% / 0.55); }
+.feuille { position: absolute; left: 0; right: 0; bottom: 0; background: var(--fond); border-radius: 34px 34px 0 0; padding: 12px 20px 34px; display: flex; flex-direction: column; gap: 14px; }
+.poignee { width: 40px; height: 5px; border-radius: 3px; background: var(--surface-2); align-self: center; }
+.feuille .gros-titre { font-size: 22px; }
+
+/* ---- Bouton flottant ---- */
+.fab { position: absolute; right: 20px; bottom: 112px; height: 54px; padding: 0 24px 0 18px; border-radius: 99px; background: var(--lime); color: var(--encre); font-weight: 700; font-size: 16px; display: flex; gap: 8px; align-items: center; box-shadow: 0 10px 24px hsl(100 80% 12% / 0.18); }
+
+/* ---- Notifications ---- */
+.notif { display: flex; gap: 14px; padding: 14px 4px; border-bottom: 1px solid var(--surface); flex: none; }
+.notif .texte { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.notif .quand { font-size: 12px; color: var(--discret); white-space: nowrap; }
+.notif .vignette { background: var(--surface); }
+.notif .vignette.lime { background: var(--lime); }
+.notif.neuve .titre::after { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--corail); margin-left: 8px; }
+
+/* ---- Ouverture, accueil, connexion ---- */
+.ouverture-coeur { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding-bottom: 60px; text-align: center; }
+.logo { position: relative; font-size: 64px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; color: var(--encre); }
+.logo .trait { position: absolute; left: -2%; bottom: -16px; width: 104%; height: 18px; fill: none; stroke: var(--lime); stroke-width: 6; stroke-linecap: round; }
+.accroche { color: var(--discret); font-size: 17px; margin-top: 16px; max-width: 250px; }
+
+.accueil { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 24px 0; text-align: center; }
+.illu { width: 250px; height: 208px; flex: none; fill: none; stroke: #000; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.accueil .gros-titre { margin-top: 30px; font-size: 28px; }
+.accueil p { margin-top: 8px; color: var(--encre); max-width: 300px; font-size: 15px; }
+.progres { display: flex; gap: 8px; width: 100%; margin-top: 28px; }
+.progres i { flex: 1; height: 3px; border-radius: 2px; background: var(--surface); }
+.progres i.fait { background: var(--lime); }
+.accueil-bas { display: flex; flex-direction: column; gap: 10px; padding: 24px 24px 40px; flex: none; }
+
+.connexion { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 78px 24px 0; }
+.connexion .titre-ecran { flex: none; text-align: center; font-size: 28px; margin-bottom: 16px; }
