@@ -154,13 +154,7 @@ class MaterielPage extends StatelessWidget {
                     }),
                   ),
                   const SizedBox(height: 12),
-                  BarreNavigation(
-                    indexActif: 2,
-                    onTap: (i) {
-                      // TODO : brancher la navigation (Get.offAll, routes, etc.)
-                      // une fois les autres pages disponibles.
-                    },
-                  ),
+                  const BarreNavigation(indexActif: 2),
                 ],
               ),
             ),

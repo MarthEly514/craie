@@ -14,11 +14,12 @@ class Reservation {
   });
 
   final String titre;
-  final String detail; 
+  final String detail; // lieu pour une salle, description pour du matériel
   final TypeReservation type;
 }
 
 class ReservationsController extends GetxController {
+  // Données factices en attendant le mode de stockage choisi par l'enseignant.
   final reservations = <Reservation>[
     const Reservation(
       titre: 'Salle A2-2',
@@ -38,7 +39,7 @@ class ReservationsController extends GetxController {
   ].obs;
 
   final recherche = ''.obs;
-  final filtre = Rxn<TypeReservation>(); 
+  final filtre = Rxn<TypeReservation>(); // null = Toutes
 
   List<Reservation> get visibles {
     final q = recherche.value.trim().toLowerCase();
@@ -149,11 +150,7 @@ class ReservationsPage extends StatelessWidget {
                     }),
                   ),
                   const SizedBox(height: 12),
-                  BarreNavigation(
-                    indexActif: 0,
-                    onTap: (i) {
-                    },
-                  ),
+                  const BarreNavigation(indexActif: 0),
                 ],
               ),
             ),
