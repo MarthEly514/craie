@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import 'couleurs.dart';
+import 'materiel_page.dart';
+import 'profil_page.dart';
+import 'reservations_page.dart';
+import 'salles_page.dart';
 
+/// Barre de navigation du bas, commune à toutes les pages.
+/// 0 = Réservations, 1 = Salles, 2 = Matériel, 3 = Profil
 class BarreNavigation extends StatelessWidget {
-  const BarreNavigation({
-    super.key,
-    required this.indexActif,
-    required this.onTap,
-  });
+  const BarreNavigation({super.key, required this.indexActif});
 
   final int indexActif;
-  final ValueChanged<int> onTap;
 
   static const _icones = [
     Icons.bookmark_added_outlined,
@@ -18,6 +20,22 @@ class BarreNavigation extends StatelessWidget {
     Icons.videocam_outlined,
     Icons.person_outline,
   ];
+
+  // Les pages, dans le même ordre que les icônes
+  static final List<Widget Function()> _pages = [
+    () => const ReservationsPage(),
+    () => const SallesPage(),
+    () => const MaterielPage(),
+    () => const ProfilPage(),
+  ];
+
+  void _aller(int i) {
+    // Si on clique sur la page où on est déjà, on ne fait rien
+    if (i == indexActif) return;
+
+    // Get.offAll : ouvre la page et remplace l'ancienne (pas de retour en arrière)
+    Get.offAll(_pages[i], transition: Transition.noTransition);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +52,7 @@ class BarreNavigation extends StatelessWidget {
           final actif = i == indexActif;
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => onTap(i),
+            onTap: () => _aller(i),
             child: Container(
               width: 54,
               height: 54,
