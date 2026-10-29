@@ -1,0 +1,114 @@
+// Database schema of the Craie API (PostgreSQL).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  gestionnaire
+  responsable
+}
+
+enum UserStatus {
+  active
+  suspended
+}
+
+enum ResourceType {
+  room
+  equipment
+}
+
+enum ReservationStatus {
+  active
+  released
+  expired
+}
+
+model User {
+  id                 String     @id @default(uuid()) @db.Uuid
+  fullName           String     @map("full_name")
+  // Login identifier: username (admin), email (gestionnaire) or matricule (responsable)
+  identifier         String     @unique
+  // Contact e-mail. Not used yet (reserved for the "send credentials by mail" feature)
+  email              String?
+  passwordHash       String     @map("password_hash")
+  mustChangePassword Boolean    @default(false) @map("must_change_password")
+  role               Role
+  // Only set for responsables
+  filiere            String?
+  status             UserStatus @default(active)
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+
+  reservations  Reservation[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model Resource {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  type        ResourceType
+  // Rooms
+  zone        String?
+  location    String?
+  mapsUrl     String?      @map("maps_url")
+  amenities   String[]     @default([])
+  // Equipment
+  category    String?
+  description String?
+  isBroken    Boolean      @default(false) @map("is_broken")
+  // Soft delete: the row stays so that reservation history keeps its resource
+  deletedAt   DateTime?    @map("deleted_at") @db.Timestamptz()
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+
+  reservations Reservation[]
+
+  @@map("resources")
+}
+
+model Reservation {
+  id         String            @id @default(uuid()) @db.Uuid
+  resourceId String            @map("resource_id") @db.Uuid
+  // Becomes null when the account is deleted (history is kept)
+  userId     String?           @map("user_id") @db.Uuid
+  // Copy of the user's name at booking time, still available after deletion
+  userName   String            @map("user_name")
+  classe     String            @default("")
+  motif      String
+  startAt    DateTime          @map("start_at") @db.Timestamptz()
+  endAt      DateTime          @map("end_at") @db.Timestamptz()
+  status     ReservationStatus @default(active)
+  releasedAt DateTime?         @map("released_at") @db.Timestamptz()
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+
+  resource Resource @relation(fields: [resourceId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([resourceId, status])
+  @@index([userId, status])
+  @@map("reservations")
+}
+
+// Refresh tokens are random strings; only their SHA-256 hash is stored.
+// Each token can be used once (rotation).
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz()
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz()
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}

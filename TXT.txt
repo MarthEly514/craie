@@ -1,0 +1,97 @@
+1. How the app is structured
+
+  It follows the layout you pasted. Each feature has data/ (models and repositories) and presentation/ (bindings, controllers, views, widgets).
+
+  lib/
+  ├── main.dart                  GetMaterialApp, theme, initial route (splash), registers InitialBinding
+  ├── core/
+  │   ├── bindings/initial_binding.dart   app-wide singletons (see §2)
+  │   ├── constants/app_constants.dart    test admin credentials, list of filières
+  │   ├── theme/                          app_colors.dart (Figma palette), app_theme.dart
+  │   └── utils/                          time_slot.dart (overlaps() for conflicts), validators.dart
+  ├── network/                   Dio client + endpoint constants (currently unused, kept for a future API)
+  ├── routes/                    app_routes.dart (names), app_pages.dart (route → view + binding + middleware)
+  ├── shared/
+  │   ├── services/              session_service.dart (current user), user_store.dart (in-memory accounts)
+  │   ├── middlewares/           auth_middleware.dart
+  │   └── widgets/               primary_button, custom_text_field, search_field,
+  │                              segmented_pills, role_shell (bottom nav), profile_view
+  └── features/
+      ├── splash/        splash_view + CraieLogo (painted with CustomPaint)
+      ├── onboarding/    3 slides, then the role picker
+      ├── auth/          login
+      ├── admin/         accounts list, create account, "account created", profile
+      ├── resources/     Gestionnaire home (rooms and equipment)
+      └── reservations/  Responsable home (reservations)
+
+  2. Runtime flow
+
+  1. Splash: green screen with the logo; after 2 seconds it calls Get.offNamed(onboarding).
+  2. Onboarding: OnboardingController.page runs 0–2 for the slides and 3 for the role picker. "Passer" jumps to page 3. "Me connecter" opens login. The role picker is currently decorative: the choice isn't used afterwards.
+  3. Login: LoginController.login() calls AuthRepository.login(), which looks the user up in UserStore. Wrong credentials or a suspended account throw a message that shows as a snackbar. On success it stores the user in SessionService and
+     calls Get.offAllNamed(...) with the route for the user's role (admin, gestionnaire or responsable).
+  4. Role home pages: each is a RoleShell, which is a bottom pill nav over an IndexedStack of [main page, ProfileView].
+     - Admin shows AccountsPage.
+     - Gestionnaire shows ResourcesPage.
+     - Responsable shows ReservationsPage.
+  5. Logout (in ProfileView) clears the session and returns to login.
+
+  Dependency injection. InitialBinding, registered in main.dart, creates the singletons with permanent: true: SessionService, UserStore, ApiClient, ResourceRepository and ReservationRepository. Each page's binding lazily creates its own
+  controller and repository on top of those.
+
+  Route guard. AuthMiddleware redirects to login when SessionService.isLoggedIn is false. It does not check roles, so a logged-in responsable could navigate to /admin by name.
+
+  3. Data layer
+
+  There's no backend. Everything is held in memory and resets on restart.
+
+  - UserStore is the in-memory account list and acts as the "database" of users. It is seeded with the admin (admin1234 / admin1234) and five sample accounts from the Figma, all with password 1234.
+    - UserModel.identifier is the login name: a matricule for a responsable, an email for a gestionnaire, a username for the admin.
+    - AdminRepository, AuthRepository, ResourceRepository and ReservationRepository are thin wrappers over RxLists.
+  - Reactivity. Controllers expose getters like accounts and items that filter the RxList. Views read them inside Obx, so they rebuild when the list changes. After mutating a field on an item (toggleSuspended), users.refresh() is called
+    to trigger the rebuild.
+
+  4. Assets and design
+
+  - The colours were sampled from the Figma renders (AppColors: green 9FE970, surface F0F3EC, and so on).
+  - The illustrations in assets/images/ are crops of the Figma PDFs, so they are raster images. For better quality, re-export them as SVG from Figma and add flutter_svg.
+  - The font is the default one. Montserrat from the design would need bundled font files (google_fonts was removed, see §6).
+
+  5. What is done and what isn't
+
+  Done:
+  - Splash, onboarding (slides and role picker), login.
+  - Full admin flow: list, search, filter, suspend, reactivate, delete, create (with password generator), success screen, profile.
+  - Gestionnaire home: list, search, Salles/Matériel tabs, add, delete.
+  - Responsable home: list, filter, search, release, details.
+
+  Not done:
+  - About 20 Figma screens (Gest 2–12, Responsable 2–8 and the sub-pages). Open those PDFs in FigmaDesign/ next.
+  - Booking and assignment flows.
+  - Conflict checking. TimeSlot.overlaps() exists but nothing calls it yet. This is the spec's core rule: ReservationRepository needs a book() that rejects overlapping slots on the same resource.
+  - Automatic release of forgotten reservations.
+  - Role-based route guards.
+  - Real persistence. The spec leaves storage to your teacher. When that's decided, replace the in-memory lists in UserStore, ResourceRepository and ReservationRepository. Controllers and views shouldn't need to change. network/ is ready
+    if it ends up being an API.
+  - Passwords are stored in plain text and are only suitable for testing. The Gestionnaire/Responsable password field in ProfileView shows ••••••, not the real value.
+  - test/widget_test.dart is only a placeholder.
+
+  6. Things I did that you should know about
+
+  - I rewrote the skeleton files that existed before (main.dart, network/*, routes/*), because they didn't compile together.
+  - I removed the per-feature providers/ folders and the old stub controllers, since data is local for now. Add providers back if you move to an API.
+  - I added google_fonts and then removed it, because it broke the Linux build. It pulled in a package whose native build step needs ld.lld, which isn't installed.
+  - Running it: use flutter run -d linux or -d chrome.
+  - If flutter pub get hangs, look for stale dart pub processes holding the pub lock. This happened here, and I couldn't kill them myself.
+
+  7. Where to start
+
+  1. Read routes/app_pages.dart and core/bindings/initial_binding.dart to see how the pieces connect.
+  2. Follow one feature end to end, for example admin (binding → controller → view → repository → UserStore).
+  3. To add a new screen, do these steps in order:
+     - Add its route name to app_routes.dart.
+     - Write the view and controller.
+     - Write its binding.
+     - Register a GetPage in app_pages.dart.
+  4. Then build the missing Gestionnaire and Responsable screens, starting with booking and the conflict check.
+
