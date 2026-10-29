@@ -1,3 +1,4 @@
+import 'package:craie/shared/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -7,7 +8,9 @@ import 'core/theme/app_theme.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  Get.put(await StorageService.create(), permanent: true);
   runApp(const MyApp());
 }
 

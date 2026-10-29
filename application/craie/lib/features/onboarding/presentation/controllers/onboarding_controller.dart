@@ -1,3 +1,4 @@
+import 'package:craie/shared/services/storage_service.dart';
 import 'package:get/get.dart';
 
 import '../../../../routes/app_routes.dart';
@@ -17,5 +18,8 @@ class OnboardingController extends GetxController {
 
   void skip() => page.value = slideCount;
 
-  void goToLogin() => Get.offNamed(AppRoutes.login);
+  void goToLogin() {
+    Get.find<StorageService>().setOnboardingDone();
+    Get.offNamed(AppRoutes.login);
+  } 
 }

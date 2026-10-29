@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../routes/app_routes.dart';
-import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 
 class LoginController extends GetxController {
@@ -25,11 +24,7 @@ class LoginController extends GetxController {
         identifierController.text,
         passwordController.text,
       );
-      Get.offAllNamed(switch (user.role) {
-        UserRole.admin => AppRoutes.admin,
-        UserRole.gestionnaire => AppRoutes.gestionnaire,
-        UserRole.responsableFiliere => AppRoutes.responsable,
-      });
+      Get.offAllNamed(AppRoutes.homeFor(user.role));
     } on ApiException catch (e) {
       Get.snackbar('Connexion impossible', e.message,
           snackPosition: SnackPosition.BOTTOM, margin: const EdgeInsets.all(16));

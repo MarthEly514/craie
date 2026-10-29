@@ -1,3 +1,4 @@
+import 'package:craie/shared/services/storage_service.dart';
 import 'package:get/get.dart';
 
 import '../../features/auth/data/models/user_model.dart';
@@ -5,7 +6,14 @@ import '../../features/auth/data/models/user_model.dart';
 /// Holds the logged-in user for the whole app.
 class SessionService extends GetxService {
   String? accessToken;
-  String? refreshToken;
+  String? _refreshToken;
+  String? get refreshToken => _refreshToken;
+  
+  /// Every change (login, token rotation, logout) is saved on the device.
+  set refreshToken(String? value) {
+    _refreshToken = value; 
+    Get.find<StorageService>().saveRefreshToken(value);
+  } 
 
   final Rxn<UserModel> currentUser = Rxn<UserModel>();
 

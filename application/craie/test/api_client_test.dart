@@ -4,9 +4,11 @@ import 'dart:typed_data';
 import 'package:craie/network/api_client.dart';
 import 'package:craie/network/api_exception.dart';
 import 'package:craie/shared/services/session_service.dart';
+import 'package:craie/shared/services/storage_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response;
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// fausse HTTP Layer.
 class FakeAdapter implements HttpClientAdapter {
@@ -40,9 +42,12 @@ ResponseBody jsonBody(Object data, int status) => ResponseBody.fromString(
 void main() {
   late SessionService session;
 
-  setUp(() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    Get.put(await StorageService.create());
     session = Get.put(SessionService());
   });
+
 
   tearDown(Get.reset);
 
