@@ -40,7 +40,7 @@ npm run dev                 # http://localhost:3000  (docs : /docs)
 
 ## Déployer sur Render
 
-Nouveau **Web Service** relié au dépôt GitHub :
+Nouveau **Web Service** relié au dépôt GitHub : (https://craie-yhp6.onrender.com dans notre cas)
 
 | Réglage | Valeur |
 | --- | --- |

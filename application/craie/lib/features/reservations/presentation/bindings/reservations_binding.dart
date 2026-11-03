@@ -10,6 +10,8 @@ import '../controllers/reservations_controller.dart';
 class ReservationsBinding extends Bindings {
   @override
   void dependencies() {
+    Get.find<ResourceRepository>().load();
+    Get.find<ReservationRepository>().load();
     Get.lazyPut(() => ReservationsController(Get.find<ReservationRepository>()));
     for (final (tag, type) in [
       ('room', ResourceType.room),

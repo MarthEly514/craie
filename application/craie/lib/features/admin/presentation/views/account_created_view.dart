@@ -23,7 +23,7 @@ class AccountCreatedView extends StatelessWidget {
                 child: Icon(Icons.check, color: Colors.white, size: 40),
               ),
               const SizedBox(height: 20),
-              const Text('Compte crée avec\nsucces',
+              const Text('Compte créé avec\nsucces',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
               const SizedBox(height: 32),
