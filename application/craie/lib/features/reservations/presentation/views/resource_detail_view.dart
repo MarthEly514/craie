@@ -8,6 +8,7 @@ import '../../../../shared/widgets/map_preview.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../../shared/widgets/time_range_field.dart';
+import '../../../resources/data/models/availability.dart';
 import '../../data/models/reservation_model.dart';
 import '../controllers/resource_detail_controller.dart';
 
@@ -32,21 +33,42 @@ class ResourceDetailView extends GetView<ResourceDetailController> {
               borderRadius: BorderRadius.circular(28),
             ),
             child: Obx(() {
-              final r = controller.reservation;
+              final list = controller.resourceReservations;
+              final full = controller.availability == Availability.full;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _header(),
                   const SizedBox(height: 16),
                   if (res.isRoom) _roomInfo() else _equipmentState(),
-                  _sectionLabel('Crénau de réservation'),
-                  _slot(context, r),
-                  if (r == null) _takenSlots(),
-                  const SizedBox(height: 16),
-                  if (controller.isGestionnaire) _field('Classe', 'Licence 2 GL', controller.classe, r?.classe),
-                  _field('Motif', 'Cours de bases de donnees', controller.motif, r?.motif),
-                  const SizedBox(height: 8),
-                  ..._actions(r),
+                  if (list.isNotEmpty) ..._reservationList(list),
+                  if (!controller.isGestionnaire) _takenSlots(), // anonymous slots of everyone
+                  if (full)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text("Aucun créneau libre pour aujourd'hui.",
+                          style: TextStyle(fontSize: 11, color: AppColors.muted)),
+                    )
+                  else ...[
+                    _sectionLabel('Créneau de réservation'),
+                    _slot(context),
+                    const SizedBox(height: 16),
+                    if (controller.isGestionnaire) _field('Classe', 'Licence 2 GL', controller.classe),
+                    _field('Motif', 'Cours de bases de donnees', controller.motif),
+                    const SizedBox(height: 8),
+                    PrimaryButton(
+                      label: 'Réserver',
+                      onPressed: res.isBroken || controller.timeError.value != null ? null : controller.book,
+                    ),
+                  ],
+                  if (controller.isGestionnaire) ...[
+                    const SizedBox(height: 10),
+                    PrimaryButton(
+                      label: 'Supprimer la ressource',
+                      style: AppButtonStyle.outlineDanger,
+                      onPressed: controller.deleteResource,
+                    ),
+                  ],
                 ],
               );
             }),
@@ -123,21 +145,31 @@ class ResourceDetailView extends GetView<ResourceDetailController> {
         child: Text(t, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
       );
 
-  Widget _slot(BuildContext context, ReservationModel? r) {
-    if (r != null) {
-      return TimeRangeField(
-        start: TimeOfDay.fromDateTime(r.slot.start),
-        end: TimeOfDay.fromDateTime(r.slot.end),
-      );
-    }
-    return TimeRangeField(
-      start: controller.start.value,
-      end: controller.end.value,
-      onPickStart: () => controller.pickTime(context, true),
-      onPickEnd: () => controller.pickTime(context, false),
-      errorText: controller.timeError.value,
-    );
-  }
+  Widget _slot(BuildContext context) => TimeRangeField(
+    start: controller.start.value,
+    end: controller.end.value,
+    onPickStart: () => controller.pickTime(context, true),
+    onPickEnd: () => controller.pickTime(context, false),
+    errorText: controller.timeError.value,
+  );
+
+  Widget _field(String label, String hint, TextEditingController c) => Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: CustomTextField(controller: c, label: label, hint: hint),
+  );
+
+  List<Widget> _reservationList(List<ReservationModel> list) => [
+    _sectionLabel(controller.isGestionnaire ? 'Réservations en cours' : 'Mes réservations'),
+    for (final r in list)
+      _ReservationRow(
+        reservation: r,
+        showOwner: controller.isGestionnaire,
+        onRelease: controller.canReleaseReservation(r)
+            ? () => controller.releaseReservation(r)
+            : null,
+      ),
+    const SizedBox(height: 12),
+  ];
 
   // here we could add the unavailable time slots so the user already knows what to do
   Widget _takenSlots() {
@@ -168,63 +200,43 @@ class ResourceDetailView extends GetView<ResourceDetailController> {
       ),
     );
   }
+}
 
-  /// Editable field when free, plain read-only text when reserved.
-  Widget _field(String label, String hint, TextEditingController c, String? value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: value == null
-          ? CustomTextField(controller: c, label: label, hint: hint)
-          : Column(
+class _ReservationRow extends StatelessWidget {
+  final ReservationModel reservation;
+  final bool showOwner;
+  final VoidCallback? onRelease;
+
+  const _ReservationRow({required this.reservation, required this.showOwner, this.onRelease});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = reservation;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.only(left: 6),
-                  child: Text(value,
-                      style: const TextStyle(
-                          fontSize: 13, color: AppColors.muted, fontWeight: FontWeight.w600)),
-                ),
+                Text('${formatHm(r.slot.start)} – ${formatHm(r.slot.end)}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                if (showOwner)
+                  Text('${r.userName} · ${r.classe}', style: const TextStyle(fontSize: 11)),
+                Text(r.motif, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
               ],
             ),
-    );
-  }
-
-  List<Widget> _actions(ReservationModel? r) {
-    final res = controller.resource;
-    if (r == null) {
-      return [
-        PrimaryButton(
-          label: 'Réserver',
-          onPressed: res.isBroken || controller.timeError.value != null ? null : controller.book,
-        ),
-        if (controller.isGestionnaire) ...[
-          const SizedBox(height: 10),
-          PrimaryButton(
-            label: 'Supprimer la ressource',
-            style: AppButtonStyle.outlineDanger,
-            onPressed: controller.deleteResource,
           ),
+          if (onRelease != null)
+            TextButton(
+              onPressed: onRelease,
+              child: const Text('Libérer', style: TextStyle(color: AppColors.danger)),
+            ),
         ],
-      ];
-    }
-    return [
-      if (controller.canRelease) ...[
-        PrimaryButton(label: 'Libérer', style: AppButtonStyle.dark, onPressed: controller.release),
-        const SizedBox(height: 14),
-        Center(
-          child: Text(
-            '${res.isRoom ? 'La salle sera automatiquement libérée' : 'Le matériel sera automatiquement libéré'}\napres echeance',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 10, color: AppColors.muted),
-          ),
-        ),
-      ] else
-        Center(
-          child: Text('Réservé par ${r.userName} jusqu\'à ${formatHm(r.slot.end)}',
-              style: const TextStyle(fontSize: 10, color: AppColors.muted)),
-        ),
-    ];
+      ),
+    );
   }
 }

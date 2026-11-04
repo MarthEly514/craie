@@ -19,6 +19,11 @@ class ReservationRepository {
   ReservationModel? forResource(String resourceId) =>
       reservations.firstWhereOrNull((r) => r.resource.id == resourceId);
 
+  // here we are adding a list of all reservations so the manager "Gestionnaire " can see and manage them himself
+  List<ReservationModel> allForResource(String resourceId) =>
+      reservations.where((r) => r.resource.id == resourceId).toList()
+        ..sort((a, b) => a.slot.start.compareTo(b.slot.start));
+
   /// The server returns only the reservations the user may see (own ones for a responsable).
   Future<void> load() async {
     isLoading.value = true;

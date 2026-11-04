@@ -2,11 +2,13 @@ import 'package:craie/network/api_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/time_slot.dart';
 import '../../../../core/utils/ui.dart';
 import '../../../../shared/services/session_service.dart';
 import '../../../../shared/widgets/confirm_dialog.dart';
 import '../../../auth/data/models/user_model.dart';
+import '../../../resources/data/models/availability.dart';
 import '../../../resources/data/models/resource_model.dart';
 import '../../../resources/data/repositories/resource_repository.dart';
 import '../../data/models/reservation_model.dart';
@@ -32,17 +34,6 @@ class ResourceDetailController extends GetxController {
 
   UserModel? get user => session.currentUser.value;
   bool get isGestionnaire => user?.role == UserRole.gestionnaire;
-
-  bool get isTaken => resources.find(resource.id)?.isTaken ?? false;
-
-  /// Current reservation of this resource (reactive).
-  ReservationModel? get reservation => reservations.forResource(resource.id);
-
-  /// The gestionnaire can free anything; a responsable only their own.
-  bool get canRelease {
-    final r = reservation;
-    return r != null && (isGestionnaire || r.userId == user?.id);
-  }
 
   @override
   void onInit() {
@@ -122,13 +113,22 @@ class ResourceDetailController extends GetxController {
     }
   }
 
-  Future<void> release() async {
-    final r = reservation;
-    if (r == null) return;
+  List<ReservationModel> get resourceReservations => reservations.allForResource(resource.id);
+
+  /// The gestionnaire can free any slot; a responsable only their own.
+  bool canReleaseReservation(ReservationModel r) => isGestionnaire || r.userId == user?.id;
+
+  Availability get availability {
+    final n = DateTime.now();
+    final fresh = resources.find(resource.id) ?? resource;
+    return fresh.availability(n, DateTime(n.year, n.month, n.day, AppConstants.closingHour));
+  }
+
+  Future<void> releaseReservation(ReservationModel r) async {
     if (!await confirmRelease(resource)) return;
     try {
       await reservations.release(r);
-      await resources.load();
+      await resources.load(); // refreshes the slots and the status
     } on ApiException catch (e) {
       showMessage('Erreur', e.message);
     }
