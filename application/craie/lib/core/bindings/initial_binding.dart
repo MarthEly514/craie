@@ -13,8 +13,8 @@ class InitialBinding extends Bindings {
     Get.put(SessionService(), permanent: true);
     Get.put(ApiClient(), permanent: true);
     final api = Get.find<ApiClient>();
-    Get.put(AuthRepository(Get.find<ApiClient>(), Get.find<SessionService>()), permanent: true);
-    Get.put(AuthRepository(api, Get.find<SessionService>()), permanent: true);
+    final session = Get.find<SessionService>();
+    Get.put(AuthRepository(api, session),permanent: true,);
     Get.put(ResourceRepository(api), permanent: true);
     Get.put(ReservationRepository(api), permanent: true);
 

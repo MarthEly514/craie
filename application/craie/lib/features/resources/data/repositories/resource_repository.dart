@@ -14,14 +14,22 @@ class ResourceRepository {
   final isLoading = false.obs;
   final error = RxnString();
 
-  ResourceModel? find(String id) => resources.firstWhereOrNull((r) => r.id == id);
+  ResourceModel? find(String id) =>
+      resources.firstWhereOrNull((r) => r.id == id);
 
   Future<void> load() async {
     isLoading.value = true;
     error.value = null;
     try {
       final data = await api.get(ApiEndpoints.resources) as List<dynamic>;
-      resources.assignAll(data.map((j) => ResourceModel.fromJson(j as Map<String, dynamic>)));
+      print('RESSOURCES REÇUES : $data');
+
+      resources.assignAll(
+        data.map((j) => ResourceModel.fromJson(j as Map<String, dynamic>)),
+      );
+      resources.assignAll(
+        data.map((j) => ResourceModel.fromJson(j as Map<String, dynamic>)),
+      );
     } on ApiException catch (e) {
       error.value = e.message;
     } finally {

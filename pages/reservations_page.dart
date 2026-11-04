@@ -3,72 +3,19 @@ import 'package:get/get.dart';
 
 import 'barre_navigation.dart';
 import 'couleurs.dart';
+import '../application/craie/lib/core/utils/time_slot.dart';
+import '../application/craie/lib/features/reservations/presentation/controllers/reservations_controller.dart';
 
-enum TypeReservation { salle, materiel }
-
-class Reservation {
-  const Reservation({
-    required this.titre,
-    required this.detail,
-    required this.type,
-  });
-
-  final String titre;
-  final String detail; // lieu pour une salle, description pour du matériel
-  final TypeReservation type;
-}
-
-class ReservationsController extends GetxController {
-  // Données factices en attendant le mode de stockage choisi par l'enseignant.
-  final reservations = <Reservation>[
-    const Reservation(
-      titre: 'Salle A2-2',
-      detail: 'Zone master (Zogbadjè)',
-      type: TypeReservation.salle,
-    ),
-    const Reservation(
-      titre: 'Projecteur EpsonC10',
-      detail: 'Epson C10-V12',
-      type: TypeReservation.materiel,
-    ),
-    const Reservation(
-      titre: 'Rallonge_5',
-      detail: 'Rallonge 15m grise',
-      type: TypeReservation.materiel,
-    ),
-  ].obs;
-
-  final recherche = ''.obs;
-  final filtre = Rxn<TypeReservation>(); // null = Toutes
-
-  List<Reservation> get visibles {
-    final q = recherche.value.trim().toLowerCase();
-    return reservations.where((r) {
-      final okType = filtre.value == null || r.type == filtre.value;
-      final okTexte = q.isEmpty ||
-          r.titre.toLowerCase().contains(q) ||
-          r.detail.toLowerCase().contains(q);
-      return okType && okTexte;
-    }).toList();
-  }
-
-  void liberer(Reservation r) {
-    reservations.remove(r);
-    Get.snackbar(
-      'Réservation libérée',
-      r.titre,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-    );
-  }
-}
+import '../application/craie/lib/features/reservations/data/models/reservation_model.dart';
 
 class ReservationsPage extends StatelessWidget {
-  const ReservationsPage({super.key});
+  final String title;
+
+  const ReservationsPage({super.key, this.title = 'Réservations'});
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.put(ReservationsController());
+    final c = Get.find<ReservationsController>();
 
     return Scaffold(
       backgroundColor: Couleurs.fond,
@@ -81,42 +28,43 @@ class ReservationsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Réservations',
-                    style: TextStyle(
+                  Text(
+                    title,
+                    style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
                       color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _ChampRecherche(onChanged: (v) => c.recherche.value = v),
+                  _ChampRecherche(
+                    onChanged: (v) => c.query.value = v,
+                  ),
                   const SizedBox(height: 18),
                   Obx(() => Row(
                         children: [
                           _Filtre(
                             label: 'Toutes',
-                            actif: c.filtre.value == null,
-                            onTap: () => c.filtre.value = null,
+                            actif: c.filter.value == 0,
+                            onTap: () => c.filter.value = 0,
                           ),
                           const SizedBox(width: 10),
                           _Filtre(
                             label: 'Matériel',
-                            actif: c.filtre.value == TypeReservation.materiel,
-                            onTap: () =>
-                                c.filtre.value = TypeReservation.materiel,
+                            actif: c.filter.value == 1,
+                            onTap: () => c.filter.value = 1,
                           ),
                           const SizedBox(width: 10),
                           _Filtre(
                             label: 'Salles',
-                            actif: c.filtre.value == TypeReservation.salle,
-                            onTap: () => c.filtre.value = TypeReservation.salle,
+                            actif: c.filter.value == 2,
+                            onTap: () => c.filter.value = 2,
                           ),
                         ],
                       )),
                   const SizedBox(height: 16),
                   Obx(() {
-                    final n = c.visibles.length;
+                    final n = c.items.length;
                     return Text(
                       '${n.toString().padLeft(2, '0')} réservation${n > 1 ? 's' : ''}',
                       style: const TextStyle(
@@ -129,7 +77,8 @@ class ReservationsPage extends StatelessWidget {
                   const SizedBox(height: 10),
                   Expanded(
                     child: Obx(() {
-                      final liste = c.visibles;
+                      final liste = c.items;
+
                       if (liste.isEmpty) {
                         return const Center(
                           child: Text(
@@ -138,19 +87,18 @@ class ReservationsPage extends StatelessWidget {
                           ),
                         );
                       }
+
                       return ListView.separated(
                         itemCount: liste.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 14),
                         itemBuilder: (_, i) => _CarteReservation(
                           reservation: liste[i],
                           onDetails: () => _afficherDetails(liste[i]),
-                          onLiberer: () => c.liberer(liste[i]),
+                          onLiberer: () => c.release(liste[i]),
                         ),
                       );
                     }),
                   ),
-                  const SizedBox(height: 12),
-                  const BarreNavigation(indexActif: 0),
                 ],
               ),
             ),
@@ -160,7 +108,7 @@ class ReservationsPage extends StatelessWidget {
     );
   }
 
-  void _afficherDetails(Reservation r) {
+  void _afficherDetails(ReservationModel r) {
     Get.bottomSheet(
       Container(
         width: double.infinity,
@@ -174,7 +122,7 @@ class ReservationsPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              r.titre,
+              r.resource.name,
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
@@ -183,14 +131,26 @@ class ReservationsPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              r.detail,
-              style: const TextStyle(fontSize: 15, color: Couleurs.discret),
+              r.resource.subtitle,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Couleurs.discret,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
-              r.type == TypeReservation.salle ? 'Salle' : 'Matériel',
-              style: const TextStyle(fontSize: 13, color: Couleurs.discret),
+              r.resource.isRoom ? 'Salle' : 'Matériel',
+              style: const TextStyle(
+                fontSize: 13,
+                color: Couleurs.discret,
+              ),
             ),
+            const SizedBox(height: 8),
+            Text('Début : ${formatHm(r.slot.start)}'),
+            Text('Fin : ${formatHm(r.slot.end)}'),
+            const SizedBox(height: 8),
+            Text('Motif : ${r.motif}'),
+            Text('Classe : ${r.classe}'),
           ],
         ),
       ),
@@ -273,13 +233,13 @@ class _CarteReservation extends StatelessWidget {
     required this.onLiberer,
   });
 
-  final Reservation reservation;
+  final ReservationModel reservation;
   final VoidCallback onDetails;
   final VoidCallback onLiberer;
 
   @override
   Widget build(BuildContext context) {
-    final estSalle = reservation.type == TypeReservation.salle;
+    final estSalle = reservation.resource.isRoom;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
@@ -296,7 +256,7 @@ class _CarteReservation extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  reservation.titre,
+                  reservation.resource.name,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -307,13 +267,16 @@ class _CarteReservation extends StatelessWidget {
                 Row(
                   children: [
                     if (estSalle) ...[
-                      const Icon(Icons.location_on_outlined,
-                          size: 20, color: Couleurs.discret),
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 20,
+                        color: Couleurs.discret,
+                      ),
                       const SizedBox(width: 8),
                     ],
                     Flexible(
                       child: Text(
-                        reservation.detail,
+                        reservation.resource.subtitle,
                         style: const TextStyle(
                           fontSize: 14,
                           color: Couleurs.discret,
@@ -321,6 +284,14 @@ class _CarteReservation extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '${formatHm(reservation.slot.start)} - ${formatHm(reservation.slot.end)}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Couleurs.discret,
+                  ),
                 ),
               ],
             ),
@@ -333,7 +304,10 @@ class _CarteReservation extends StatelessWidget {
                   onPressed: onDetails,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.black,
-                    side: const BorderSide(color: Couleurs.discret, width: 1.5),
+                    side: const BorderSide(
+                      color: Couleurs.discret,
+                      width: 1.5,
+                    ),
                     shape: const StadiumBorder(),
                     minimumSize: const Size.fromHeight(38),
                   ),

@@ -8,7 +8,7 @@ import '../routes/app_routes.dart';
 import 'api_endpoints.dart';
 
 class ApiClient {
-  late final Dio dio;
+  late final Dio dio; 
   late final Dio _bare;
   Future<bool>? _refreshing;  
 
