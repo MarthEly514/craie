@@ -355,6 +355,44 @@ describe.skipIf(!hasDb)('Craie API', () => {
       expect(list.json()[0]).toMatchObject({ name: 'Salle A', isTaken: true });
     });
 
+    it('lists the occupied slots of each resource, without personal data', async () => {
+      const room = await makeRoom(prisma, 'Salle A');
+      await book('10080345', room.id, [10, 11]);
+      await book('10080346', room.id, [14, 15]);
+      const headers = await authHeader(app, '10080346');
+      const slot1 = { startAt: '2026-10-28T10:00:00.000Z', endAt: '2026-10-28T11:00:00.000Z' };
+      const slot2 = { startAt: '2026-10-28T14:00:00.000Z', endAt: '2026-10-28T15:00:00.000Z' };
+
+      // Default window: from now, for 24 hours
+      const all = await app.inject({ method: 'GET', url: '/api/v1/resources', headers });
+      expect(all.json()[0].todayBookings).toEqual([slot1, slot2]);
+
+      // A narrower window keeps only the slots that overlap it; isTaken is unaffected
+      const narrow = await app.inject({
+        method: 'GET',
+        url: '/api/v1/resources?from=2026-10-28T12:00:00.000Z&to=2026-10-28T16:00:00.000Z',
+        headers,
+      });
+      expect(narrow.json()[0].todayBookings).toEqual([slot2]);
+      expect(narrow.json()[0].isTaken).toBe(true);
+
+      // The detail route returns them too
+      const detail = await app.inject({
+        method: 'GET',
+        url: `/api/v1/resources/${room.id}`,
+        headers,
+      });
+      expect(detail.json().todayBookings).toEqual([slot1, slot2]);
+
+      // A window that ends before it starts is refused
+      const bad = await app.inject({
+        method: 'GET',
+        url: '/api/v1/resources?from=2026-10-28T16:00:00.000Z&to=2026-10-28T12:00:00.000Z',
+        headers,
+      });
+      expect(bad.statusCode).toBe(422);
+    });
+
     it('refuses an overlapping slot with 409 SLOT_CONFLICT', async () => {
       const room = await makeRoom(prisma, 'Salle A');
       await book('10080345', room.id, [10, 12]);

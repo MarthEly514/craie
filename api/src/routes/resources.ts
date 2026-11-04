@@ -1,13 +1,19 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { AppError, notFound, parse } from '../lib/errors.js';
-import type { Prisma } from '../lib/prisma.js';
-import { toResourceDto } from '../lib/serializers.js';
+import type { Prisma, Resource } from '../lib/prisma.js';
+import { toResourceDto, type Booking } from '../lib/serializers.js';
 import { releaseActiveReservations } from '../services/reservations.js';
 
 const idParams = z.object({ id: z.uuid() });
 
-const listQuery = z.object({
+// Time window for `todayBookings` (ISO dates). Default: from now, for 24 hours.
+const windowQuery = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+
+const listQuery = windowQuery.extend({
   type: z.enum(['room', 'equipment']).optional(),
   zone: z.string().trim().optional(),
   category: z.string().trim().optional(),
@@ -52,9 +58,51 @@ const updateBody = z
 const ROOM_FIELDS = ['zone', 'location', 'mapsUrl', 'amenities'];
 const EQUIPMENT_FIELDS = ['category', 'description', 'isBroken'];
 
-// A resource is "taken" while it has an active reservation that has not ended yet
-const takenFilter = (now: Date) =>
-  ({ where: { status: 'active', endAt: { gt: now } }, select: { id: true }, take: 1 }) as const;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_WINDOW_MS = 7 * DAY_MS;
+
+/** The window the app asks for (default: now → +24 h). Rejects empty or very long windows. */
+function bookingWindow(query: { from?: Date; to?: Date }, now: Date) {
+  const from = query.from ?? now;
+  const to = query.to ?? new Date(from.getTime() + DAY_MS);
+  const length = to.getTime() - from.getTime();
+  if (length <= 0 || length > MAX_WINDOW_MS) {
+    throw new AppError(
+      422,
+      'VALIDATION_ERROR',
+      'Champ « to » invalide : il doit suivre « from » de 7 jours au maximum',
+    );
+  }
+  return { from, to };
+}
+
+// Active reservations that have not ended yet. The lower bound is the earlier of `now` and
+// `from`, so the same rows serve both `isTaken` and `todayBookings`.
+const activeBookings = (now: Date, from: Date) =>
+  ({
+    where: {
+      status: 'active',
+      endAt: { gt: new Date(Math.min(now.getTime(), from.getTime())) },
+    },
+    select: { startAt: true, endAt: true },
+    orderBy: { startAt: 'asc' },
+  }) as const;
+
+/**
+ * - `isTaken`: the resource has an active reservation that has not ended yet (unchanged).
+ * - `todayBookings`: the occupied slots overlapping [from, to]. No names or reasons, so
+ *   a responsable can see when a room is busy without seeing who holds it.
+ */
+const toListDto = (
+  r: Resource & { reservations: Booking[] },
+  now: Date,
+  window: { from: Date; to: Date },
+) =>
+  toResourceDto(
+    r,
+    r.reservations.some((b) => b.endAt > now),
+    r.reservations.filter((b) => b.startAt < window.to && b.endAt > window.from),
+  );
 
 const resourcesRoutes: FastifyPluginAsync = async (app) => {
   const anyRole = app.auth(); // any logged-in user can look at resources
@@ -69,12 +117,15 @@ const resourcesRoutes: FastifyPluginAsync = async (app) => {
       schema: {
         tags,
         security,
-        summary: 'Liste des salles et du matériel (filtres : type, zone, category, q)',
+        summary:
+          'Liste des salles et du matériel (filtres : type, zone, category, q). ' +
+          '`from`/`to` bornent les créneaux occupés renvoyés dans `todayBookings`.',
       },
     },
     async (request) => {
-      const { type, zone, category, q } = parse(listQuery, request.query);
+      const { type, zone, category, q, from: qFrom, to: qTo } = parse(listQuery, request.query);
       const now = new Date();
+      const window = bookingWindow({ from: qFrom, to: qTo }, now);
       const where: Prisma.ResourceWhereInput = {
         deletedAt: null,
         ...(type && { type }),
@@ -85,9 +136,9 @@ const resourcesRoutes: FastifyPluginAsync = async (app) => {
       const resources = await app.prisma.resource.findMany({
         where,
         orderBy: { name: 'asc' },
-        include: { reservations: takenFilter(now) },
+        include: { reservations: activeBookings(now, window.from) },
       });
-      return resources.map((r) => toResourceDto(r, r.reservations.length > 0));
+      return resources.map((r) => toListDto(r, now, window));
     },
   );
 
@@ -96,12 +147,14 @@ const resourcesRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: anyRole, schema: { tags, security, summary: "Détail d'une ressource" } },
     async (request) => {
       const { id } = parse(idParams, request.params);
+      const now = new Date();
+      const window = bookingWindow(parse(windowQuery, request.query), now);
       const resource = await app.prisma.resource.findFirst({
         where: { id, deletedAt: null },
-        include: { reservations: takenFilter(new Date()) },
+        include: { reservations: activeBookings(now, window.from) },
       });
       if (!resource) throw notFound('Ressource introuvable');
-      return toResourceDto(resource, resource.reservations.length > 0);
+      return toListDto(resource, now, window);
     },
   );
 
@@ -133,7 +186,7 @@ const resourcesRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const body = parse(createBody, request.body);
       const resource = await app.prisma.resource.create({ data: body });
-      return reply.code(201).send(toResourceDto(resource, false));
+      return reply.code(201).send(toResourceDto(resource, false, []));
     },
   );
 
@@ -161,12 +214,14 @@ const resourcesRoutes: FastifyPluginAsync = async (app) => {
         );
       }
 
+      const now = new Date();
+      const window = bookingWindow({}, now);
       const updated = await app.prisma.resource.update({
         where: { id },
         data: body,
-        include: { reservations: takenFilter(new Date()) },
+        include: { reservations: activeBookings(now, window.from) },
       });
-      return toResourceDto(updated, updated.reservations.length > 0);
+      return toListDto(updated, now, window);
     },
   );
 

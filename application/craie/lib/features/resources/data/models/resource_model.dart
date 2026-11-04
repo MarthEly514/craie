@@ -1,3 +1,6 @@
+import '../../../../core/utils/time_slot.dart';
+import 'availability.dart';
+
 enum ResourceType { room, equipment }
 
 extension ResourceTypeJson on ResourceType {
@@ -20,6 +23,7 @@ class ResourceModel {
 
   /// Currently reserved. Sent by the API in list/detail responses; never sent back.
   final bool isTaken;
+  final List<TimeSlot> todaySlots;
 
   // Rooms
   final String zone;
@@ -31,6 +35,7 @@ class ResourceModel {
   final String category;
   final String description;
   final bool isBroken;
+
 
   const ResourceModel({
     required this.id,
@@ -44,6 +49,7 @@ class ResourceModel {
     this.category = '',
     this.description = '',
     this.isBroken = false,
+    this.todaySlots = const [],
   });
 
   bool get isRoom => type == ResourceType.room;
@@ -51,6 +57,9 @@ class ResourceModel {
   String get subtitle => isRoom ? '$zone ($location)' : description;
 
   String get filterKey => isRoom ? zone : category;
+
+  Availability availability(DateTime now, DateTime dayEnd) =>
+      computeAvailability(todaySlots, now, dayEnd);
 
   factory ResourceModel.fromJson(Map<String, dynamic> json) => ResourceModel(
         id: json['id'] as String,
@@ -64,7 +73,14 @@ class ResourceModel {
         category: json['category'] as String? ?? '',
         description: json['description'] as String? ?? '',
         isBroken: json['isBroken'] as bool? ?? false,
-      );
+        todaySlots: (json['todayBookings'] as List?)
+            ?.map((b) => TimeSlot(
+          DateTime.parse(b['startAt'] as String).toLocal(),
+          DateTime.parse(b['endAt'] as String).toLocal(),
+        ))
+            .toList() ??
+            const [],
+  );
 
   Map<String, dynamic> toJson() => {
         'name': name,

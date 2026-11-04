@@ -2,9 +2,12 @@ import 'package:craie/core/utils/ui.dart';
 import 'package:craie/network/api_exception.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../reservations/data/repositories/reservation_repository.dart';
+import '../../data/models/availability.dart';
 import '../../data/models/resource_model.dart';
 import '../../data/repositories/resource_repository.dart';
+import 'dart:async';
 
 /// State of a searchable / filterable list of resources (rooms or equipment).
 /// Several instances exist (distinguished by tag): the gestionnaire's
@@ -18,6 +21,9 @@ class ResourceListController extends GetxController {
 
   /// Selected zone (rooms) or category (equipment); null = all.
   final filter = Rxn<String>();
+
+  final now = DateTime.now().obs;
+  Timer? _ticker;
 
   ResourceListController(this.resources, this.reservations, ResourceType initial)
       : type = initial.obs;
@@ -40,9 +46,26 @@ class ResourceListController extends GetxController {
         .toList();
   }
 
+  Availability availabilityOf(ResourceModel r) {
+    final n = now.value;
+    return r.availability(n, DateTime(n.year, n.month, n.day, AppConstants.closingHour));
+  }
+
   void setType(ResourceType t) {
     type.value = t;
     filter.value = null;
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    _ticker = Timer.periodic(const Duration(minutes: 1), (_) => now.value = DateTime.now());
+  }
+
+  @override
+  void onClose() {
+    _ticker?.cancel();
+    super.onClose();
   }
 
 
@@ -56,3 +79,4 @@ class ResourceListController extends GetxController {
   }
 
 }
+

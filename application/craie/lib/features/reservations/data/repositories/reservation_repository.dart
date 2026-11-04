@@ -34,7 +34,7 @@ class ReservationRepository {
     }
   }
 
-  /// Throws [ApiException] with a French message when the booking is refused.
+  /// Throws [ApiException] when the booking is refused.
   Future<void> book({
     required ResourceModel resource,
     required TimeSlot slot,

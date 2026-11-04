@@ -11,6 +11,10 @@ class AppConstants {
     'GL-1', 'GL-2', 'GL-3', 'IM-1', 'IM-2', 'IM-3', 'SI-1', 'SI-2', 'SI-3',
   ];
 
+  static const minSlot = Duration(minutes: 30);
+  static const openingHour = 6;
+  static const closingHour = 19;
+
   static const List<String> zones = ['Zone master', 'Zone licence'];
   static const List<String> equipmentTypes = ['Projecteur', 'Rallonge', 'Autre'];
   static const List<String> roomAmenities = ['Climatiseur', 'Electricité'];

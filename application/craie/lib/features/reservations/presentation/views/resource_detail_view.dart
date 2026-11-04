@@ -41,6 +41,7 @@ class ResourceDetailView extends GetView<ResourceDetailController> {
                   if (res.isRoom) _roomInfo() else _equipmentState(),
                   _sectionLabel('Crénau de réservation'),
                   _slot(context, r),
+                  if (r == null) _takenSlots(),
                   const SizedBox(height: 16),
                   if (controller.isGestionnaire) _field('Classe', 'Licence 2 GL', controller.classe, r?.classe),
                   _field('Motif', 'Cours de bases de donnees', controller.motif, r?.motif),
@@ -135,6 +136,36 @@ class ResourceDetailView extends GetView<ResourceDetailController> {
       onPickStart: () => controller.pickTime(context, true),
       onPickEnd: () => controller.pickTime(context, false),
       errorText: controller.timeError.value,
+    );
+  }
+
+  // here we could add the unavailable time slots so the user already knows what to do
+  Widget _takenSlots() {
+    final taken = controller.takenSlots;
+    if (taken.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionLabel('Créneaux déjà occupés'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final s in taken)
+                Chip(
+                  label: Text('${formatHm(s.start)} – ${formatHm(s.end)}'),
+                  labelStyle: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.danger),
+                  backgroundColor: AppColors.danger.withValues(alpha: 0.1),
+                  side: BorderSide.none,
+                  shape: const StadiumBorder(),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

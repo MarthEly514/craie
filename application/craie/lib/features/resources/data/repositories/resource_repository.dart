@@ -1,8 +1,12 @@
+import 'package:craie/core/constants/app_constants.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/utils/time_slot.dart';
 import '../../../../network/api_client.dart';
 import '../../../../network/api_endpoints.dart';
 import '../../../../network/api_exception.dart';
+import '../models/availability.dart';
 import '../models/resource_model.dart';
 
 class ResourceRepository {
@@ -20,13 +24,23 @@ class ResourceRepository {
     isLoading.value = true;
     error.value = null;
     try {
-      final data = await api.get(ApiEndpoints.resources) as List<dynamic>;
+      final now = DateTime.now();
+      final dayEnd = DateTime(now.year, now.month, now.day, AppConstants.closingHour);
+      final data = await api.get(
+        ApiEndpoints.resources,
+        // The server returns each resource's bookings overlapping [from, to].
+        query: {
+          'from': now.toUtc().toIso8601String(),
+          'to': dayEnd.toUtc().toIso8601String(),
+        },
+      ) as List<dynamic>;
       resources.assignAll(data.map((j) => ResourceModel.fromJson(j as Map<String, dynamic>)));
     } on ApiException catch (e) {
       error.value = e.message;
     } finally {
       isLoading.value = false;
     }
+    // debugPrint(resources.map((r) => '${r.name}: ${r.todaySlots.length}').join(' | '));
   }
 
   Future<void> add(ResourceModel r) async {

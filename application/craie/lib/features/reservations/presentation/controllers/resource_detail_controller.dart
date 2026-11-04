@@ -58,8 +58,19 @@ class ResourceDetailController extends GetxController {
     return DateTime(now.year, now.month, now.day, t.hour, t.minute);
   }
 
-  void _validate() =>
-      timeError.value = validateSlot(_at(start.value), _at(end.value));
+  void _validate() {
+    final slot = TimeSlot(_at(start.value), _at(end.value));
+    timeError.value = validateSlot(slot.start, slot.end) ?? _conflict(slot);
+  }
+
+  String? _conflict(TimeSlot s) {
+    for (final t in takenSlots) {
+      if (s.overlaps(t)) {
+        return 'Ce créneau chevauche ${formatHm(t.start)} – ${formatHm(t.end)}';
+      }
+    }
+    return null;
+  }
 
   /// Opens the time selector; the new value is applied even if invalid so the
   /// error is displayed on the time boxes.
@@ -79,6 +90,14 @@ class ResourceDetailController extends GetxController {
     if (picked == null) return;
     current.value = picked;
     _validate();
+  }
+
+  /// Occupied slots from now on, earliest first
+  List<TimeSlot> get takenSlots {
+    final fresh = resources.find(resource.id) ?? resource;
+    final now = DateTime.now();
+    return fresh.todaySlots.where((s) => s.end.isAfter(now)).toList()
+      ..sort((a, b) => a.start.compareTo(b.start));
   }
 
 

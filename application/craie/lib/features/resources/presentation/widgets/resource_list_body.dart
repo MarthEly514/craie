@@ -9,6 +9,7 @@ import '../../../../shared/widgets/filter_chips.dart';
 import '../../../../shared/widgets/search_field.dart';
 import '../../../../shared/widgets/segmented_pills.dart';
 import '../../../../shared/widgets/status_badge.dart';
+import '../../data/models/availability.dart';
 import '../../data/models/resource_model.dart';
 import '../controllers/resource_list_controller.dart';
 
@@ -143,7 +144,7 @@ class ResourceListBody extends StatelessWidget {
             separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (_, i) => _ResourceTile(
               resource: list[i],
-              taken: controller.isTaken(list[i]),
+              availability: controller.availabilityOf(list[i]),
               manage: manage,
               onDelete: () async {
                 final ok = await showConfirmDialog(
@@ -165,34 +166,36 @@ class ResourceListBody extends StatelessWidget {
 
 class _ResourceTile extends StatelessWidget {
   final ResourceModel resource;
-  final bool taken;
+  final Availability availability;
   final bool manage;
   final VoidCallback onDelete;
 
   const _ResourceTile({
     required this.resource,
-    required this.taken,
+    required this.availability,
     required this.manage,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final faded = !manage && taken;
+    final blocked = !manage && (resource.isBroken || availability == Availability.full);
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      onTap: () => Get.toNamed(AppRoutes.resourceDetail, arguments: resource.id),
+      onTap: blocked
+          ? null
+          : () => Get.toNamed(AppRoutes.resourceDetail, arguments: resource.id),
       child: Container(
         padding: EdgeInsets.fromLTRB(14, 12, manage ? 6 : 14, 12),
         decoration: BoxDecoration(
-          color: faded ? const Color(0xFFF8F9F6) : AppColors.surface,
+          color: blocked ? const Color(0xFFF8F9F6) : AppColors.surface,
           borderRadius: BorderRadius.circular(18),
         ),
         child: Row(
           children: [
             Expanded(
               child: Opacity(
-                opacity: faded ? 0.5 : 1,
+                opacity: blocked ? 0.5 : 1,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -223,9 +226,14 @@ class _ResourceTile extends StatelessWidget {
                 icon: const Icon(Icons.delete_outline, color: AppColors.danger),
               )
             else if (resource.isBroken)
-              const StatusBadge(label: 'En panne', positive: false)
+              const StatusBadge(label: 'En panne', positive: false) // const ici car tous les attributs de StatusBadge sont des valeurs connues. Cela permet a Flutter de ne pas rebuild le composant a chaque fois. Si ce n'etait pas le cas, on n'aurait pas de const.
             else
-              StatusBadge(label: taken ? 'Prise' : 'Libre', positive: !taken),
+            // CHANGED: three states instead of Libre / Indisponible
+              switch (availability) {
+                Availability.full    => const StatusBadge(label: 'Indisponible', positive: false),
+                Availability.partial => const StatusBadge(label: 'Réservable', positive: true),
+                Availability.free    => const StatusBadge(label: 'Libre', positive: true),
+              },
           ],
         ),
       ),

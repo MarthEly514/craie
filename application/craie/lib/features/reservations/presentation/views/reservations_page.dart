@@ -65,13 +65,13 @@ class ReservationsPage extends GetView<ReservationsController> {
           ? EmptyState(
               title: 'Aucune attribution pour le moment',
               subtitle: 'Faites-en une pour la voir ici',
-              buttonLabel: 'Attribuer une salle',
+              buttonLabel: 'Attribuer une ressource',
               onPressed: () => Get.toNamed(AppRoutes.assign),
             )
           : EmptyState(
               title: 'Aucune réservation pour le moment',
               subtitle: 'Faites-en une pour la voir ici',
-              buttonLabel: 'Réserver une salle',
+              buttonLabel: 'Réserver une ressource',
               onPressed: () => Get.find<NavController>().index.value = 1,
             );
     }

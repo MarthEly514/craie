@@ -101,4 +101,7 @@ Les tests refusent une URL Neon/Render. L'heure est figée (10 h au Bénin) pour
   `FILIERE_NOT_ALLOWED`, `CLASSE_REQUIRED`, `START_AFTER_END`, `SLOT_TOO_SHORT`, `SLOT_NOT_TODAY`,
   `SLOT_IN_PAST` (422), `RATE_LIMITED` (429).
 - `isTaken` d'une ressource = elle a une réservation active qui n'est pas encore terminée.
+- `GET /resources` et `GET /resources/:id` renvoient aussi `todayBookings` : les créneaux occupés
+  (`[{ startAt, endAt }]`, sans nom ni motif) qui chevauchent la fenêtre `?from=&to=` (dates ISO).
+  Par défaut : de maintenant à +24 h ; au plus 7 jours. L'application en déduit les créneaux libres.
 - Les champs qui ne concernent pas le type (ex. `zone` pour un matériel) valent `null`.

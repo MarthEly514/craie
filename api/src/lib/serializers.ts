@@ -14,7 +14,14 @@ export const toUserDto = (u: User) => ({
   mustChangePassword: u.mustChangePassword,
 });
 
-export const toResourceDto = (r: Resource, isTaken: boolean) => ({
+/** A time range during which a resource is occupied (no personal data: safe for every role). */
+export type Booking = { startAt: Date; endAt: Date };
+
+/**
+ * `todayBookings` is only present when the caller passes the occupied slots (resource
+ * list / detail). Without it the key is omitted, and the app treats that as "no slots".
+ */
+export const toResourceDto = (r: Resource, isTaken: boolean, todayBookings?: Booking[]) => ({
   id: r.id,
   name: r.name,
   type: r.type,
@@ -26,6 +33,12 @@ export const toResourceDto = (r: Resource, isTaken: boolean) => ({
   description: r.description,
   isBroken: r.isBroken,
   isTaken,
+  ...(todayBookings && {
+    todayBookings: todayBookings.map((b) => ({
+      startAt: b.startAt.toISOString(),
+      endAt: b.endAt.toISOString(),
+    })),
+  }),
 });
 
 export const toReservationDto = (r: Reservation & { resource: Resource }) => ({
